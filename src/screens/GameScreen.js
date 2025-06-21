@@ -38,9 +38,14 @@ const GameScreen = () => {
                                         tile === 1 && styles.titleWalable,
                                         tile === 2 && styles.tileGoal,
                                         tile === 0 && styles.tileEmpty,
-                                        isPlayer && styles.playerTile,
                                     ]}
-                                />     
+                                >    
+                                    {isPlayer && (
+                                      <Text style={styles.playerIcon}>
+                                        👤
+                                      </Text>
+                                    )}
+                                </View> 
                             );
                         })}
                     </View>
@@ -49,15 +54,15 @@ const GameScreen = () => {
 
             {/* Controls */}
             <View style={styles.controls}>
-                <View styles={styles.controlsRow}>
+                <View style={styles.dpadRow}>
                     <Button title="Up" onPress={() => movePlayer(-1, 0)} />
                 </View>
-                <View styles={styles.controlsRow}>
+                <View style={styles.dpadMiddleRow}>
                     <Button title="Left" onPress={() => movePlayer(0, -1)} />
-                    {/* <View style={{ width: 20 }} /> */}
+                    <View style={{ width: 30 }} />
                     <Button title="Right" onPress={() => movePlayer(0, 1)} />
                 </View>
-                <View styles={styles.controlsRow}>
+                <View style={styles.dpadRow}>
                     <Button title="Down" onPress={() => movePlayer(1, 0)} />
                 </View>
             </View>
@@ -112,11 +117,22 @@ const styles = StyleSheet.create({
   controls: {
     marginTop: 30,
   },
-  controlsRow: {
+  dpadRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginVertical: 5,
   },
+  dpadMiddleRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 5,
+  },
+  playerIcon: {
+    fontSize: 30,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+  }
 });
 
 export default GameScreen;
