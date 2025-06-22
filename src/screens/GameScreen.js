@@ -1,10 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import level1 from '../data/level1.json'
 import { View, Text, StyleSheet, Button } from "react-native";
 
 
 const GameScreen = () => {
     const [playerPos, setPlayerPos] = useState({row: 0, col: 0});
+    const [isMemorizationPhase, setIsMemorizationPhase] = useState(true);
+    const [countdown, setCountdown] = useState(3);
+
+    useEffect(() => {
+      if(countdown > 0){
+        const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }else{
+        setIsMemorizationPhase(false);
+      }
+    },[countdown])
 
     const canMoveTo = (row, col) => {
         const isBonds = row >= 0 && row < level1.height && col >= 0 && col < level1.width;
@@ -35,9 +48,9 @@ const GameScreen = () => {
                                     key={colIndex}
                                     style={[
                                         styles.tile,
-                                        tile === 1 && styles.titleWalable,
-                                        tile === 2 && styles.tileGoal,
-                                        tile === 0 && styles.tileEmpty,
+                                        (isMemorizationPhase 
+                                          ? (tile === 1 && styles.tileWalkables) || (tile === 2 && styles.tileGoal) || (tile === 0 && styles.tileEmpty)
+                                        : styles.tileEmpty),
                                     ]}
                                 >    
                                     {isPlayer && (
@@ -53,19 +66,22 @@ const GameScreen = () => {
             </View>
 
             {/* Controls */}
-            <View style={styles.controls}>
-                <View style={styles.dpadRow}>
-                    <Button title="Up" onPress={() => movePlayer(-1, 0)} />
-                </View>
-                <View style={styles.dpadMiddleRow}>
-                    <Button title="Left" onPress={() => movePlayer(0, -1)} />
-                    <View style={{ width: 30 }} />
-                    <Button title="Right" onPress={() => movePlayer(0, 1)} />
-                </View>
-                <View style={styles.dpadRow}>
-                    <Button title="Down" onPress={() => movePlayer(1, 0)} />
-                </View>
-            </View>
+            {isMemorizationPhase ?
+              (<Text style={styles.countdownText}> Memorize the path... {countdown} </Text>) 
+                :
+              <View style={styles.controls}>
+                  <View style={styles.dpadRow}>
+                      <Button title="Up" onPress={() => movePlayer(-1, 0)} />
+                  </View>
+                  <View style={styles.dpadMiddleRow}>
+                      <Button title="Left" onPress={() => movePlayer(0, -1)} />
+                      <View style={{ width: 30 }} />
+                      <Button title="Right" onPress={() => movePlayer(0, 1)} />
+                  </View>
+                  <View style={styles.dpadRow}>
+                      <Button title="Down" onPress={() => movePlayer(1, 0)} />
+                  </View>
+              </View>}
 
         </View>
     );
@@ -101,7 +117,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  titleWalable: {
+  tileWalkables: {
     backgroundColor: '#4CAF50',
   },
   tileGoal: {
@@ -132,6 +148,12 @@ const styles = StyleSheet.create({
     fontSize: 30,
     textAlign: 'center',
     textAlignVertical: 'center',
+  },
+  countdownText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'red',
+    marginBottom: 10,
   }
 });
 
