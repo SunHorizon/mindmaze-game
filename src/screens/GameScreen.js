@@ -1,12 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import level1 from '../data/level1.json'
-import { View, Text, StyleSheet, Button } from "react-native";
+import { View, Text, StyleSheet, Button, Animated } from "react-native";
 
 
 const GameScreen = () => {
+
+    const playerPositionRef = useRef({ row: 0, col: 0 }); // Add ref
     const [playerPos, setPlayerPos] = useState({row: 0, col: 0});
     const [isMemorizationPhase, setIsMemorizationPhase] = useState(true);
     const [countdown, setCountdown] = useState(3);
+
+    const [gameStarted, setGameStarted] = useState(false);
+    const [gameOver, setGameOver] = useState(false);
+    const [gameWon, setGameWon] = useState(false);
+    const [steppedTile, setSteepedTile] = useState({});
+
+    const [animatedTile, setAnimatedTile]= useState({});
 
     useEffect(() => {
       if(countdown > 0){
@@ -25,11 +34,53 @@ const GameScreen = () => {
     }
 
     const movePlayer = (dRow, dCol) => {
+        if(gameOver || gameWon) return;
+
         const newRow = playerPos.row + dRow;
         const newCol = playerPos.col + dCol;
-        if(canMoveTo(newRow, newCol)){
-            setPlayerPos({ row: newRow, col: newCol });
+
+        if(!canMoveTo(newRow, newCol)) return;
+
+        const tile = level1.tiles[newRow][newCol];
+
+        if(!gameStarted) setGameStarted(true);
+
+        if(tile === 0) setGameOver(true);
+        if(tile === 2) setGameWon(true);
+        if(steppedTile[`${newRow},${newCol}`] === 'black') setGameOver(true);
+
+        if(tile === 1 && steppedTile[`${newRow},${newCol}`] !== 'black'){
+
+          const key = `${newRow},${newCol}`;
+          setSteepedTile((prev) => ({...prev, [key]: 'green'}));
+
+          const anim = new Animated.Value(1)
+          setAnimatedTile((prev) => ({ ...prev, [key]: anim }));
+
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 2000,
+            useNativeDriver: true,
+          }).start(() => {
+              setSteepedTile((prev) => ({...prev, [key]: 'black'}));
+              const currentPos = playerPositionRef.current;
+              if(currentPos.row === newRow && currentPos.col === newCol){
+                setGameOver(true);
+              }
+          })
+
+          // setTimeout(() => {
+          //   setSteepedTile((prev) => ({...prev, [key]: 'black'}));
+          //   const currentPos = playerPositionRef.current;
+          //   if(currentPos.row === newRow && currentPos.col === newCol){
+          //     setGameOver(true);
+          //   }
+          // }, 2000)
         }
+
+        // move player
+        setPlayerPos({ row: newRow, col: newCol });
+        playerPositionRef.current = { row: newRow, col: newCol };
     }
 
 
@@ -43,32 +94,59 @@ const GameScreen = () => {
                     <View key={rowIndex} style={styles.row}> 
                         {row.map((tile, colIndex) => {
                             const isPlayer = playerPos.row === rowIndex && playerPos.col === colIndex;
+                            const key = `${rowIndex},${colIndex}`;
+                            
+                            let tileStyle = {};
+                            if(tile === 3){
+                              tileStyle = styles.tileStart;
+                            }else if(steppedTile[key] === 'green'){
+                              tileStyle = styles.tileCorrect;
+                            } else if(steppedTile[key] === 'black'){
+                              tileStyle = styles.tileBlack;
+                            }else{
+                              if(isMemorizationPhase){
+                                if (tile === 1) tileStyle = styles.tileWalkables;
+                                else if (tile === 2) tileStyle = styles.tileGoal;
+                                else tileStyle = styles.tileEmpty;
+                              }else{
+                                tileStyle = styles.tileEmpty;
+                              }
+                            }
                             return (
-                                <View
+                              steppedTile[key] === 'green' && animatedTile[key] ? (
+                                <Animated.View
                                     key={colIndex}
-                                    style={[
-                                        styles.tile,
-                                        (isMemorizationPhase 
-                                          ? (tile === 1 && styles.tileWalkables) || (tile === 2 && styles.tileGoal) || (tile === 0 && styles.tileEmpty)
-                                        : styles.tileEmpty),
-                                    ]}
-                                >    
-                                    {isPlayer && (
-                                      <Text style={styles.playerIcon}>
-                                        👤
-                                      </Text>
-                                    )}
+                                    style={[ 
+                                      styles.tile, 
+                                      tileStyle,
+                                      {
+                                        opacity: animatedTile[key],
+                                         position: 'relative',
+                                      }
+
+                                      ]}>    
+                                    {isPlayer && ( <Text style={styles.playerIcon}>👤</Text>)}
+                                </Animated.View> 
+
+                              ): (
+                                 <View key={colIndex} style={[ styles.tile, tileStyle]}>    
+                                    {isPlayer && ( <Text style={styles.playerIcon}>👤</Text> )}
                                 </View> 
+                              )
                             );
                         })}
                     </View>
                 ))}
             </View>
-
+            
+            {gameOver && <Text style={styles.gameOverText}>Game Over! ❌</Text>}
+            {gameWon && <Text style={styles.gameWonText}>You Win! 🎉</Text>}
+            
             {/* Controls */}
             {isMemorizationPhase ?
               (<Text style={styles.countdownText}> Memorize the path... {countdown} </Text>) 
                 :
+              (!gameOver && !gameWon) && 
               <View style={styles.controls}>
                   <View style={styles.dpadRow}>
                       <Button title="Up" onPress={() => movePlayer(-1, 0)} />
@@ -117,6 +195,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  tileStart: {
+    backgroundColor: '#2196F3',
+  },
+  tileCorrect: {
+    backgroundColor: '#4CAF50',
+  },
+  tileBlack: {
+    backgroundColor: '#000',
+  },
   tileWalkables: {
     backgroundColor: '#4CAF50',
   },
@@ -154,7 +241,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'red',
     marginBottom: 10,
-  }
+  },
+  gameOverText: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: 'red',
+    marginTop: 20,
+  },
+  gameWonText: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: 'green',
+    marginTop: 20,
+  },
 });
 
 export default GameScreen;
