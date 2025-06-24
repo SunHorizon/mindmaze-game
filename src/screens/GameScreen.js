@@ -1,14 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
-import level1 from '../data/level1.json'
 import { View, Text, StyleSheet, Button, Animated } from "react-native";
 
 
-const GameScreen = () => {
+//Levels
+import level1Data from '../data/level1.json';
+import level2Data from '../data/level2.json';
+import level3Data from '../data/level3.json';
+
+const levels = {
+  1: level1Data,
+  2: level2Data,
+  3: level3Data,
+};
+
+
+// enums
+const COUNT_DOWN_TIMER = 3;
+
+
+const GameScreen = ({ route }) => {
+
+    const { levelNumber } = route.params;
+    // Load level based on levelNumber
+    const levelData = levels[levelNumber];
 
     const playerPositionRef = useRef({ row: 0, col: 0 }); // Add ref
     const [playerPos, setPlayerPos] = useState({row: 0, col: 0});
     const [isMemorizationPhase, setIsMemorizationPhase] = useState(true);
-    const [countdown, setCountdown] = useState(3);
+    const [countdown, setCountdown] = useState(COUNT_DOWN_TIMER);
 
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
@@ -16,6 +35,8 @@ const GameScreen = () => {
     const [steppedTile, setSteepedTile] = useState({});
 
     const [animatedTile, setAnimatedTile]= useState({});
+
+    
 
     useEffect(() => {
       if(countdown > 0){
@@ -29,7 +50,7 @@ const GameScreen = () => {
     },[countdown])
 
     const canMoveTo = (row, col) => {
-        const isBonds = row >= 0 && row < level1.height && col >= 0 && col < level1.width;
+        const isBonds = row >= 0 && row < levelData.height && col >= 0 && col < levelData.width;
         return isBonds;
     }
 
@@ -41,7 +62,7 @@ const GameScreen = () => {
 
         if(!canMoveTo(newRow, newCol)) return;
 
-        const tile = level1.tiles[newRow][newCol];
+        const tile = levelData.tiles[newRow][newCol];
 
         if(!gameStarted) setGameStarted(true);
 
@@ -68,14 +89,6 @@ const GameScreen = () => {
                 setGameOver(true);
               }
           })
-
-          // setTimeout(() => {
-          //   setSteepedTile((prev) => ({...prev, [key]: 'black'}));
-          //   const currentPos = playerPositionRef.current;
-          //   if(currentPos.row === newRow && currentPos.col === newCol){
-          //     setGameOver(true);
-          //   }
-          // }, 2000)
         }
 
         // move player
@@ -83,14 +96,24 @@ const GameScreen = () => {
         playerPositionRef.current = { row: newRow, col: newCol };
     }
 
+    const resetGame = () => {
+      setPlayerPos({ row: 0, col: 0});
+      setGameStarted(false);
+      setGameOver(false);
+      setGameWon(false);
+      setSteepedTile({});
+      setAnimatedTile({});
+      setIsMemorizationPhase(true);
+      setCountdown(COUNT_DOWN_TIMER);
+    }
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Level 1</Text>
+            <Text style={styles.title}>Level {levelNumber}</Text>
 
             {/* Grid */}
             <View styles={styles.grid}>
-                {level1.tiles.map((row, rowIndex) => (
+                {levelData.tiles.map((row, rowIndex) => (
                     <View key={rowIndex} style={styles.row}> 
                         {row.map((tile, colIndex) => {
                             const isPlayer = playerPos.row === rowIndex && playerPos.col === colIndex;
@@ -139,8 +162,23 @@ const GameScreen = () => {
                 ))}
             </View>
             
-            {gameOver && <Text style={styles.gameOverText}>Game Over! ❌</Text>}
-            {gameWon && <Text style={styles.gameWonText}>You Win! 🎉</Text>}
+            {gameOver && (
+              <>
+                <Text style={styles.gameOverText}>Game Over! ❌</Text>
+                <View style={styles.gameOverContainer}>
+                  <Button title="Retry" onPress={resetGame} />
+                </View>
+              </>
+            )}
+            
+            {gameWon &&  (
+              <>
+                <Text style={styles.gameWonText}>You Win! 🎉</Text>
+                <View style={styles.gameOverContainer}>
+                  <Button title="Retry" onPress={resetGame} />
+                </View>
+              </>
+            )}
             
             {/* Controls */}
             {isMemorizationPhase ?
@@ -160,7 +198,6 @@ const GameScreen = () => {
                       <Button title="Down" onPress={() => movePlayer(1, 0)} />
                   </View>
               </View>}
-
         </View>
     );
 };
@@ -253,6 +290,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'green',
     marginTop: 20,
+  },
+  gameOverContainer: {
+    marginTop: 30,
   },
 });
 
