@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Button, Animated } from "react-native";
-
+import { useNavigation } from "@react-navigation/native";
 
 //Levels
 import level1Data from '../data/level1.json';
@@ -23,6 +23,8 @@ const GameScreen = ({ route }) => {
     const { levelNumber } = route.params;
     // Load level based on levelNumber
     const levelData = levels[levelNumber];
+
+    const navigation = useNavigation();
 
     const playerPositionRef = useRef({ row: 0, col: 0 }); // Add ref
     const [playerPos, setPlayerPos] = useState({row: 0, col: 0});
@@ -110,6 +112,10 @@ const GameScreen = ({ route }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Level {levelNumber}</Text>
+            <View style={styles.topBar}>
+              <Button title="Quit" onPress={() => navigation.goBack()} />
+              <Button title="Main Menu" onPress={() => navigation.reset({index: 0, routes: [{ name: 'MainMenu' }]})} />
+            </View>
 
             {/* Grid */}
             <View styles={styles.grid}>
@@ -293,6 +299,12 @@ const styles = StyleSheet.create({
   },
   gameOverContainer: {
     marginTop: 30,
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 40,
+    marginBottom: 20,
   },
 });
 

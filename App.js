@@ -15,8 +15,13 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName='MainMenu'>
         <Stack.Screen name='MainMenu' component={MainMenu} />
-        <Stack.Screen name='GameScreen' component={GameScreen} />
         <Stack.Screen name='LevelSelection' component={LevelSelection} />
+        <Stack.Screen 
+          name='GameScreen' 
+          component={GameScreen}
+          // options={{ headerLeft: () => null }}
+          options={{ headerShown: false }}
+          />
       </Stack.Navigator>
     </NavigationContainer>
   )
