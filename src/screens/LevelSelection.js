@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Button, StyleSheet, FlatList } from 'react-native';
+import { View, Text, Button, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
 
 
 const levels = [
@@ -11,15 +11,21 @@ const levels = [
 export default function LevelSelection({ navigation }) {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Select a Level</Text>
+            <Text style={styles.title}>🗂 Select a Level</Text>
+
             <FlatList 
                 data={levels}
                 keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={styles.list}
                 renderItem={({item}) => (
-                    <Button 
-                        title={item.name}
+
+                    <TouchableOpacity
+                        style={styles.card}
+                        activeOpacity={0.8}
                         onPress={() =>  navigation.navigate('GameScreen', { levelNumber: item.id })}
-                    />
+                    >
+                        <Text style={styles.cardText}>{item.name}</Text>
+                    </TouchableOpacity>
                 )}
             />
         </View>
@@ -30,13 +36,37 @@ export default function LevelSelection({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
+    backgroundColor: '#f8fafd',
+    paddingTop: 60,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+    color: '#333',
     textAlign: 'center',
     marginBottom: 30,
   },
+  list: {
+    paddingBottom: 20,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 30,
+    marginBottom: 15,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 3},
+    shadowRadius: 6,
+    alignContent: 'center',
+    justifyContent: 'center',
+  },
+  cardText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: "#4CAF50",
+  }
 });

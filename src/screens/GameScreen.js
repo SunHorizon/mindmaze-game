@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Button, Animated } from "react-native";
+import { View, Text, StyleSheet, Button, Animated, TouchableOpacity  } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 //Levels
@@ -97,25 +97,20 @@ const GameScreen = ({ route }) => {
         setPlayerPos({ row: newRow, col: newCol });
         playerPositionRef.current = { row: newRow, col: newCol };
     }
-
-    const resetGame = () => {
-      setPlayerPos({ row: 0, col: 0});
-      setGameStarted(false);
-      setGameOver(false);
-      setGameWon(false);
-      setSteepedTile({});
-      setAnimatedTile({});
-      setIsMemorizationPhase(true);
-      setCountdown(COUNT_DOWN_TIMER);
-    }
-
+  
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Level {levelNumber}</Text>
+
             <View style={styles.topBar}>
-              <Button title="Quit" onPress={() => navigation.goBack()} />
-              <Button title="Main Menu" onPress={() => navigation.reset({index: 0, routes: [{ name: 'MainMenu' }]})} />
+              <TouchableOpacity style={styles.navButton} onPress={() => navigation.goBack()}>
+                <Text style={styles.navButtonText}>Quit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.navButton} onPress={() => navigation.reset({index: 0, routes: [{ name: 'MainMenu' }]})}>
+                <Text style={styles.navButtonText}>Main Menu</Text>
+              </TouchableOpacity>
             </View>
+
 
             {/* Grid */}
             <View styles={styles.grid}>
@@ -168,23 +163,21 @@ const GameScreen = ({ route }) => {
                 ))}
             </View>
             
-            {gameOver && (
-              <>
-                <Text style={styles.gameOverText}>Game Over! ❌</Text>
+
+            {gameOver && ( <Text style={styles.gameOverText}>Game Over! ❌</Text>)}       
+            {gameWon &&  (<Text style={styles.gameWonText}>You Win! 🎉</Text>)}
+            {(gameOver || gameWon) && 
                 <View style={styles.gameOverContainer}>
-                  <Button title="Retry" onPress={resetGame} />
+                  <TouchableOpacity style={styles.retryButton} 
+                  onPress={() => {
+                    setTimeout(() => {
+                      navigation.replace('GameScreen', { levelNumber });
+                    }, 50);
+                  }}>
+                    <Text style={styles.retryText}>Retry</Text>
+                  </TouchableOpacity>
                 </View>
-              </>
-            )}
-            
-            {gameWon &&  (
-              <>
-                <Text style={styles.gameWonText}>You Win! 🎉</Text>
-                <View style={styles.gameOverContainer}>
-                  <Button title="Retry" onPress={resetGame} />
-                </View>
-              </>
-            )}
+            }
             
             {/* Controls */}
             {isMemorizationPhase ?
@@ -193,17 +186,27 @@ const GameScreen = ({ route }) => {
               (!gameOver && !gameWon) && 
               <View style={styles.controls}>
                   <View style={styles.dpadRow}>
-                      <Button title="Up" onPress={() => movePlayer(-1, 0)} />
+                      <TouchableOpacity style={styles.dpadButton} onPress={() => movePlayer(-1, 0)} >
+                        <Text style={styles.dpadText}>↑</Text>
+                      </TouchableOpacity>
                   </View>
                   <View style={styles.dpadMiddleRow}>
-                      <Button title="Left" onPress={() => movePlayer(0, -1)} />
+                     <TouchableOpacity style={styles.dpadButton} onPress={() => movePlayer(0, -1)} >
+                        <Text style={styles.dpadText}>←</Text>
+                      </TouchableOpacity>
                       <View style={{ width: 30 }} />
-                      <Button title="Right" onPress={() => movePlayer(0, 1)} />
+                      <TouchableOpacity style={styles.dpadButton} onPress={() => movePlayer(0, 1)} >
+                        <Text style={styles.dpadText}>→</Text>
+                      </TouchableOpacity>
                   </View>
                   <View style={styles.dpadRow}>
-                      <Button title="Down" onPress={() => movePlayer(1, 0)} />
+                      <TouchableOpacity style={styles.dpadButton} onPress={() => movePlayer(1, 0)} >
+                        <Text style={styles.dpadText}>↓</Text>
+                      </TouchableOpacity>
                   </View>
-              </View>}
+              </View>
+              
+              }
         </View>
     );
 };
@@ -216,13 +219,30 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 50,
     alignItems: 'center',
-    backgroundColor: '#fff'
+    backgroundColor: '#f2f5f9'
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 20,
+    color: "#2c3e50",
+    marginBottom: 10,
+  },
+  topBar: {
+    flexDirection: 'row',
+    gap: 15,
+    justifyContent: 'center',
+    marginVertical: 20,
+  },
+  navButton: {
+    backgroundColor: '#34495e',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },  
+  navButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold'
   },
   grid: {
     alignItems: 'center',
@@ -237,31 +257,46 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 2,
   },
   tileStart: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#3498db',
   },
   tileCorrect: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#2ecc71',
   },
   tileBlack: {
-    backgroundColor: '#000',
+    backgroundColor: '#2c3e50',
   },
   tileWalkables: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#2ecc71',
   },
   tileGoal: {
-    backgroundColor: '#FFD700', // gold
+    backgroundColor: '#f1c40f', // gold
   },
   tileEmpty: {
-    backgroundColor: '#ccc', // grey
+    backgroundColor: '#dcdde1', // grey
+  },
+  playerIcon: {
+    fontSize: 26,
   },
   playerTile: {
     borderWidth: 3,
     borderColor: '#0000FF',
   },
   controls: {
-    marginTop: 30,
+    marginTop: 20,
+  },
+  dpadButton: {
+    backgroundColor: '#2980b9',
+    borderRadius: 10,
+    padding: 15,
+    margin: 5,
+  },
+  dpadText: {
+    fontSize: 22,
+    color: '#fff',
+    fontWeight: 'bold',
   },
   dpadRow: {
     flexDirection: 'row',
@@ -274,38 +309,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 5,
   },
-  playerIcon: {
-    fontSize: 30,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-  },
   countdownText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'red',
+    color: '#e67e22',
     marginBottom: 10,
   },
   gameOverText: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: 'red',
+    color: '#e74c3c',
     marginTop: 20,
   },
   gameWonText: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: 'green',
+    color: '#27ae60',
     marginTop: 20,
   },
   gameOverContainer: {
     marginTop: 30,
   },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 40,
-    marginBottom: 20,
+  retryButton: {
+    backgroundColor: '#9b59b6',
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
   },
+  retryText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  }
 });
 
 export default GameScreen;
