@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Button, Animated, TouchableOpacity  } from "react-native";
+import { View, Text, StyleSheet, Animated, TouchableOpacity  } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 //Levels
@@ -37,8 +37,8 @@ const GameScreen = ({ route }) => {
     const [steppedTile, setSteepedTile] = useState({});
 
     const [animatedTile, setAnimatedTile]= useState({});
-
-    
+    const cancelledRef = useRef(false);
+  
 
     useEffect(() => {
       if(countdown > 0){
@@ -73,18 +73,18 @@ const GameScreen = ({ route }) => {
         if(steppedTile[`${newRow},${newCol}`] === 'black') setGameOver(true);
 
         if(tile === 1 && steppedTile[`${newRow},${newCol}`] !== 'black'){
-
           const key = `${newRow},${newCol}`;
           setSteepedTile((prev) => ({...prev, [key]: 'green'}));
 
           const anim = new Animated.Value(1)
           setAnimatedTile((prev) => ({ ...prev, [key]: anim }));
-
           Animated.timing(anim, {
             toValue: 0,
             duration: 2000,
             useNativeDriver: true,
           }).start(() => {
+              if (cancelledRef.current) return; 
+
               setSteepedTile((prev) => ({...prev, [key]: 'black'}));
               const currentPos = playerPositionRef.current;
               if(currentPos.row === newRow && currentPos.col === newCol){
@@ -97,16 +97,26 @@ const GameScreen = ({ route }) => {
         setPlayerPos({ row: newRow, col: newCol });
         playerPositionRef.current = { row: newRow, col: newCol };
     }
+
+    const stopAnimations = () => {
+      cancelledRef.current = true;
+      Object.values(animatedTile).forEach((anim) => {
+        if(anim && typeof anim.stop === 'function'){
+          anim.stop()
+        }
+      })
+    }
+
   
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Level {levelNumber}</Text>
 
             <View style={styles.topBar}>
-              <TouchableOpacity style={styles.navButton} onPress={() => navigation.goBack()}>
+              <TouchableOpacity style={styles.navButton} onPress={() => {stopAnimations(); navigation.goBack()} }>
                 <Text style={styles.navButtonText}>Quit</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.navButton} onPress={() => navigation.reset({index: 0, routes: [{ name: 'MainMenu' }]})}>
+              <TouchableOpacity style={styles.navButton} onPress={() => {stopAnimations(); navigation.reset({index: 0, routes: [{ name: 'MainMenu' }]})}}>
                 <Text style={styles.navButtonText}>Main Menu</Text>
               </TouchableOpacity>
             </View>
@@ -170,9 +180,8 @@ const GameScreen = ({ route }) => {
                 <View style={styles.gameOverContainer}>
                   <TouchableOpacity style={styles.retryButton} 
                   onPress={() => {
-                    setTimeout(() => {
-                      navigation.replace('GameScreen', { levelNumber });
-                    }, 50);
+                    stopAnimations();
+                    navigation.replace('GameScreen', { levelNumber });
                   }}>
                     <Text style={styles.retryText}>Retry</Text>
                   </TouchableOpacity>
