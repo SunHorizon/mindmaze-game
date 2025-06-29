@@ -36,6 +36,9 @@ const GameScreen = ({ route }) => {
     const [gameWon, setGameWon] = useState(false);
     const [steppedTile, setSteepedTile] = useState({});
 
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [timerActive, setTimerActive] = useState(false);
+
     const [animatedTile, setAnimatedTile]= useState({});
     const cancelledRef = useRef(false);
   
@@ -50,6 +53,26 @@ const GameScreen = ({ route }) => {
         setIsMemorizationPhase(false);
       }
     },[countdown])
+
+
+    useEffect(() => {
+      if(!isMemorizationPhase) setTimerActive(true);
+    }, [isMemorizationPhase])
+
+    useEffect(() => {
+      if(!timerActive) return;
+
+      const interval = setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000);
+
+      return () => clearInterval(interval); 
+    }, [timerActive])
+
+    useEffect(() => {
+      if(gameOver || gameWon) setTimerActive(false);
+    }, [gameOver, gameWon])
+
 
     const canMoveTo = (row, col) => {
         const isBonds = row >= 0 && row < levelData.height && col >= 0 && col < levelData.width;
@@ -111,7 +134,9 @@ const GameScreen = ({ route }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Level {levelNumber}</Text>
-
+            {!isMemorizationPhase && (
+              <Text style={styles.elapsedTime}>⏱ Time: {elapsedTime}s</Text>
+            )}
             <View style={styles.topBar}>
               <TouchableOpacity style={styles.navButton} onPress={() => {stopAnimations(); navigation.goBack()} }>
                 <Text style={styles.navButtonText}>Quit</Text>
@@ -350,6 +375,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  elapsedTime: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3498db',
+    marginBottom: 10,
   }
 });
 
